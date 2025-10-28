@@ -17,9 +17,11 @@ nchnls = 1 ; number of channels. stero would be 2
 ; csound will recalculate relative delta/timestamps in midi as absolute timestamps from beginning
 ; due to tempo change and that could introduce silence gaps
 
+; https://csound.com/docs/manual/ScoreGenRef.html
 gisine   ftgen 1, 0, 16384, 10, 1	;sine wave
 gisquare ftgen 2, 0, 16384, 10, 1, 0 , .33, 0, .2 , 0, .14, 0 , .11, 0, .09 ;odd harmonics
-gisaw    ftgen 3, 0, 16384, 10, 0, .2, 0, .4, 0, .6, 0, .8, 0, 1, 0, .8, 0, .6, 0, .4, 0,.2 ;even harmonics
+gisquarenes ftgen 3, 0, 16384, 7, 1, 8192, 1, 8192, 0 ; 50% duty wave
+gisaw    ftgen 4, 0, 16384, 10, 0, .2, 0, .4, 0, .6, 0, .8, 0, 1, 0, .8, 0, .6, 0, .4, 0,.2 ;even harmonics
 
 instr 1
     ; --- 1. MIDI Parameter Reading & Duration Fix ---
@@ -51,6 +53,9 @@ instr 1
     #end
     #ifdef SQUARE
         aSig poscil3 iScale, iFreq, gisquare
+    #endif
+    #ifdef SQUARENES
+        aSig poscil3 iScale, iFreq, gisquarenes
     #endif
     #ifdef SAW
         aSig poscil3 iScale, iFreq, gisaw
