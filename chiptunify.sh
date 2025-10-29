@@ -12,8 +12,9 @@ ALLOWED_TYPES=("BUZZ" "SQUARE" "SAW" "FM" "SQUARENES")
 DEFAULT_TYPE="BUZZ"
 
 show_help() {
-    echo "Usage: $0 <action> -m <midi_file> [-s <synth_type>] [-t <tempo_adjust>]"
+    echo "Usage: $0 <action> -m <midi_file> [-s <synth_type>] [-a]"
     echo "  action: play | build"
+    echo "  -a accelerates tempo if original midi is too slow"
     echo "  Default SYNTH_TYPE: ${DEFAULT_TYPE}"
     echo "  Allowed SYNTH_TYPES: ${ALLOWED_TYPES[*]}"
     exit 1
@@ -21,19 +22,36 @@ show_help() {
 
 # Function to remove Tempo events from the MIDI file
 # Args: $1 = input MIDI file path
-fix_midi() {
+# Args: $2 = output MIDI file path
+# Args: $3 = optional tempo adjust
+fix_midi_tempo() {
     local INPUT_MIDI="$1"
-    # Create a temporary output file path for the fixed MIDI
-    FIXED_MIDI="${INPUT_MIDI%.mid}_fixed_temp.mid"
+    local OUTPUT_MIDI="$2"
+    local FASTER="$3"
 
     # Use midicsv, remove lines containing "Tempo", and pipe to csvmidi
     echo "--- Fixing MIDI: Removing Tempo events from ${INPUT_MIDI}..."
-    midicsv "${INPUT_MIDI}" | grep -v "Tempo" | csvmidi > "${FIXED_MIDI}"
+    midicsv "${INPUT_MIDI}" | grep -v "Tempo" | csvmidi > "${OUTPUT_MIDI}"
+
+    if [[ ! -z ${FASTER} ]]; then
+        echo "GO FASTER"
+        local TMP_FILE=$(mktemp)
+        cp ${OUTPUT_MIDI} ${TMP_FILE}
+
+        midicsv "$TMP_FILE" \
+          | awk -F', ' 'BEGIN{OFS=", "} {
+              # scale absolute tick timestamp (column 2) by 0.5
+              if ($2 ~ /^[0-9]+$/) $2 = int($2 * 0.67 + 0.5)
+              print
+            }' \
+          | csvmidi > "$OUTPUT_MIDI"
+
+        rm -f $TMP_FILE
+    fi
 
     # Check if the fix was successful and return the path
-    if [ -f "${FIXED_MIDI}" ]; then
-        echo "--- Fixed MIDI created: ${FIXED_MIDI}"
-        echo "${FIXED_MIDI}"
+    if [ -f "${OUTPUT_MIDI}" ]; then
+        echo "--- Fixed MIDI created: ${OUTPUT_MIDI}"
         return 0
     else
         echo "Error: midicsv or csvmidi failed." >&2
@@ -49,14 +67,14 @@ fi
 shift
 
 SYNTH_TYPE=${DEFAULT_TYPE}
-TEMPOADJUST=""
+GOFASTER=""
 CSD_FILE="chiptune_synth.csd"
 
-while getopts ":m:s:t:" opt; do
+while getopts ":m:s:a" opt; do
   case $opt in
     m) ORIGINAL_MIDI_FILE="$OPTARG" ;;
     s) SYNTH_TYPE="$OPTARG" ;;
-    t) TEMPOADJUST="$OPTARG" ;;
+    a) GOFASTER=1 ;;
     \?) echo "Error: Invalid option -$OPTARG" >&2; show_help ;;
     :) echo "Error: Option -$OPTARG requires an argument." >&2; show_help ;;
   esac
@@ -89,7 +107,9 @@ fi
 
 CSOUND_FLAG="--omacro:${SYNTH_TYPE}=1"
 
-fix_midi "$ORIGINAL_MIDI_FILE"
+# Create a temporary output file path for the fixed MIDI
+FIXED_MIDI="${INPUT_MIDI%.mid}_fixed_temp.mid"
+fix_midi_tempo "$ORIGINAL_MIDI_FILE" "$FIXED_MIDI" "$GOFASTER"
 if [ $? -ne 0 ]; then
     exit 1
 fi
