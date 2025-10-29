@@ -109,8 +109,12 @@ case "$ACTION" in
     
     build)
         WAV_FILE="${CSD_FILE%.csd}.wav"
+        MP3_FILE="${ORIGINAL_MIDI_FILE%.mid}.mp3"
         echo "--- Running Csound (Build) to ${WAV_FILE} ---"
         csound -F "$FIXED_MIDI" $CSOUND_FLAG -W -o "$WAV_FILE" "$CSD_FILE"
+        if [[ $? -eq 0 ]]; then
+            ffmpeg -i ${WAV_FILE} -codec:a libmp3lame -q:a 2 ${MP3_FILE}
+        fi
         ;;
     
     *)

@@ -1,4 +1,4 @@
 #!/bin/bash
 
 sudo apt-get update
-sudo apt-get install -y csound midicsv
+sudo apt-get install -y csound midicsv ffmpeg
