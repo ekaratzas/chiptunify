@@ -49,8 +49,8 @@ if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
 fi
 
 # 1. Check for required arguments
-if [ "$#" -lt 3 ]; then
-    echo "Usage: $0 <action> <csd_file> <midi_file> [SYNTH_TYPE]"
+if [ "$#" -lt 2 ]; then
+    echo "Usage: $0 <action> <midi_file> [SYNTH_TYPE]"
     echo "Actions: play (real-time) | build (to .wav)"
     echo "Default SYNTH_TYPE: ${DEFAULT_TYPE}"
     echo "Allowed SYNTH_TYPES: ${ALLOWED_TYPES[*]}"
@@ -58,8 +58,8 @@ if [ "$#" -lt 3 ]; then
 fi
 
 ACTION="$1"
-CSD_FILE="$2"
-ORIGINAL_MIDI_FILE="$3"
+CSD_FILE="chiptune_synth.csd"
+ORIGINAL_MIDI_FILE="$2"
 SYNTH_TYPE="${4:-$DEFAULT_TYPE}"
 
 # 2. Argument validation
