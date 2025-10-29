@@ -12,12 +12,11 @@ ALLOWED_TYPES=("BUZZ" "SQUARE" "SAW" "FM" "SQUARENES")
 DEFAULT_TYPE="BUZZ"
 
 show_help() {
-    echo "Usage: $0 <action> <csd_file> <midi_file> [SYNTH_TYPE]"
-    echo ""
-    echo "Actions: play (real-time) | build (to .wav)"
-    echo "Default SYNTH_TYPE: ${DEFAULT_TYPE}"
-    echo "Allowed SYNTH_TYPES: ${ALLOWED_TYPES[*]}"
-    exit 0
+    echo "Usage: $0 <action> -m <midi_file> [-s <synth_type>] [-t <tempo_adjust>]"
+    echo "  action: play | build"
+    echo "  Default SYNTH_TYPE: ${DEFAULT_TYPE}"
+    echo "  Allowed SYNTH_TYPES: ${ALLOWED_TYPES[*]}"
+    exit 1
 }
 
 # Function to remove Tempo events from the MIDI file
@@ -42,27 +41,28 @@ fix_midi() {
     fi
 }
 
-# --- Main Execution ---
-
-if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
-    show_help
-fi
-
-# 1. Check for required arguments
-if [ "$#" -lt 2 ]; then
-    echo "Usage: $0 <action> <midi_file> [SYNTH_TYPE]"
-    echo "Actions: play (real-time) | build (to .wav)"
-    echo "Default SYNTH_TYPE: ${DEFAULT_TYPE}"
-    echo "Allowed SYNTH_TYPES: ${ALLOWED_TYPES[*]}"
-    exit 1
-fi
-
 ACTION="$1"
-CSD_FILE="chiptune_synth.csd"
-ORIGINAL_MIDI_FILE="$2"
-SYNTH_TYPE="${4:-$DEFAULT_TYPE}"
+if [[ "$ACTION" != "play" && "$ACTION" != "build" ]]; then
+  echo "Error: Missing or invalid action (must be 'play' or 'build')."
+  show_help
+fi
+shift
 
-# 2. Argument validation
+SYNTH_TYPE=${DEFAULT_TYPE}
+TEMPOADJUST=""
+CSD_FILE="chiptune_synth.csd"
+
+while getopts ":m:s:t:" opt; do
+  case $opt in
+    m) ORIGINAL_MIDI_FILE="$OPTARG" ;;
+    s) SYNTH_TYPE="$OPTARG" ;;
+    t) TEMPOADJUST="$OPTARG" ;;
+    \?) echo "Error: Invalid option -$OPTARG" >&2; show_help ;;
+    :) echo "Error: Option -$OPTARG requires an argument." >&2; show_help ;;
+  esac
+done
+
+
 if [ ! -f "$CSD_FILE" ]; then
     echo "Error: CSD file '$CSD_FILE' not found."
     exit 1
@@ -89,7 +89,6 @@ fi
 
 CSOUND_FLAG="--omacro:${SYNTH_TYPE}=1"
 
-# 3. FIX the MIDI file before proceeding
 fix_midi "$ORIGINAL_MIDI_FILE"
 if [ $? -ne 0 ]; then
     exit 1
@@ -100,7 +99,6 @@ trap "rm -f \"$FIXED_MIDI\"" EXIT
 
 echo "--- Synthesizing with $SYNTH_TYPE ---"
 
-# 4. Execute the action
 case "$ACTION" in
     play)
         echo "--- Running Csound (Real-time) ---"
