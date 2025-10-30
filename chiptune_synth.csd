@@ -62,9 +62,6 @@ instr 1
     ; amplitude, freq, ratio, function table
         aSig buzz iFreq, iFreq, 0.25, gisine
     #end
-    #ifdef SQUARE
-        aSig poscil3 iScale, iFreq, gisquare
-    #endif
     #ifdef SQUARENES
         aSig poscil3 iScale, iFreq, gisquarenes
     #endif
