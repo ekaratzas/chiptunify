@@ -8,7 +8,7 @@
 # before running Csound to prevent timing errors.
 
 FIXED_MIDI=""
-ALLOWED_TYPES=("BUZZ" "SAW" "FM" "SQUARENES")
+ALLOWED_TYPES=("BUZZ" "SAW" "FM" "SQUARE" "TRIANGLE")
 DEFAULT_TYPE="BUZZ"
 
 show_help() {

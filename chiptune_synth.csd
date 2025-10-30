@@ -30,9 +30,13 @@ gisaw2 ftgen 21, 0, 16384, 7, 0, 8192, 1, 0, -1, 8192, 0
 
 
 ; SQUARE
-gisquarenes ftgen 30, 0, 16384, 7, 1, 8192, 1, 0, 0, 8192, 0 ; 50% duty wave
-gisquarenes25 ftgen 31, 0, 16384, 7, 1, 4096, 1, 0, 0, 12288, 0 ; 25% duty wave
-gisquarenes75 ftgen 32, 0, 16384, 7, 1, 12288, 1, 0, 0, 4096, 0 ; 75% duty wave
+gisquare ftgen 30, 0, 16384, 7, 1, 8192, 1, 0, 0, 8192, 0 ; 50% duty wave
+gisquare25 ftgen 31, 0, 16384, 7, 1, 4096, 1, 0, 0, 12288, 0 ; 25% duty wave
+gisquare75 ftgen 32, 0, 16384, 7, 1, 12288, 1, 0, 0, 4096, 0 ; 75% duty wave
+
+
+; TRIANGLE
+gitriangle ftgen 40, 0, 16384, 7, 0, 8192, 1, 8192, 0 ; 50% duty wave
 
 instr 1
     ; --- 1. MIDI Parameter Reading & Duration Fix ---
@@ -62,8 +66,11 @@ instr 1
     ; amplitude, freq, ratio, function table
         aSig buzz iFreq, iFreq, 0.25, gisine
     #end
-    #ifdef SQUARENES
-        aSig poscil3 iScale, iFreq, gisquarenes
+    #ifdef SQUARE
+        aSig poscil3 iScale, iFreq, gisquare
+    #endif
+    #ifdef TRIANGLE
+        aSig poscil3 iScale, iFreq, gitriangle
     #endif
     #ifdef SAW
         aSig poscil3 iScale, iFreq, gisaw2
