@@ -18,10 +18,21 @@ nchnls = 1 ; number of channels. stero would be 2
 ; due to tempo change and that could introduce silence gaps
 
 ; https://csound.com/docs/manual/ScoreGenRef.html
+
+; SINE
 gisine   ftgen 1, 0, 16384, 10, 1	;sine wave
-gisquare ftgen 2, 0, 16384, 10, 1, 0 , .33, 0, .2 , 0, .14, 0 , .11, 0, .09 ;odd harmonics
-gisquarenes ftgen 3, 0, 16384, 7, 1, 8192, 1, 8192, 0 ; 50% duty wave
-gisaw    ftgen 4, 0, 16384, 10, 0, .2, 0, .4, 0, .6, 0, .8, 0, 1, 0, .8, 0, .6, 0, .4, 0,.2 ;even harmonics
+;gisomething ftgen 2, 0, 16384, 10, 1, 0 , .33, 0, .2 , 0, .14, 0 , .11, 0, .09 ;odd harmonics
+
+
+; SAW
+gisaw    ftgen 20, 0, 16384, 10, 0, .2, 0, .4, 0, .6, 0, .8, 0, 1, 0, .8, 0, .6, 0, .4, 0,.2 ;even harmonics
+gisaw2 ftgen 21, 0, 16384, 7, 0, 8192, 1, 0, -1, 8192, 0
+
+
+; SQUARE
+gisquarenes ftgen 30, 0, 16384, 7, 1, 8192, 1, 0, 0, 8192, 0 ; 50% duty wave
+gisquarenes25 ftgen 31, 0, 16384, 7, 1, 4096, 1, 0, 0, 12288, 0 ; 25% duty wave
+gisquarenes75 ftgen 32, 0, 16384, 7, 1, 12288, 1, 0, 0, 4096, 0 ; 75% duty wave
 
 instr 1
     ; --- 1. MIDI Parameter Reading & Duration Fix ---
@@ -58,7 +69,7 @@ instr 1
         aSig poscil3 iScale, iFreq, gisquarenes
     #endif
     #ifdef SAW
-        aSig poscil3 iScale, iFreq, gisaw
+        aSig poscil3 iScale, iFreq, gisaw2
     #endif
     #ifdef FM
         kcar = 1.41
