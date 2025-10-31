@@ -1,26 +1,23 @@
 #!/bin/bash
 
 # --- Csound MIDI Preprocessor and Runner Script ---
-# Usage: ./chiptunify.sh <action> <csd_file> <midi_file> <synth_type>
-# Example: ./chiptunify.sh play chiptune_synth.csd song1.mid FM
-#
-# The script automatically removes Tempo events from the MIDI file
-# before running Csound to prevent timing errors.
 
 FIXED_MIDI=""
 ALLOWED_TYPES=("BUZZ" "SAW" "FM" "SQUARE" "TRIANGLE")
 DEFAULT_TYPE="BUZZ"
 
 show_help() {
-    echo "Usage: $0 <action> -m <midi_file> [-s <synth_type>] [-a]"
+    echo "Usage: $0 <action> -m <midi_file> [-s <synth_type>] [-v <volume_scale>] [-a]"
     echo "  action: play | build"
     echo "  -a accelerates tempo if original midi is too slow"
+    echo "  -v set volume scale"
     echo "  Default SYNTH_TYPE: ${DEFAULT_TYPE}"
     echo "  Allowed SYNTH_TYPES: ${ALLOWED_TYPES[*]}"
     exit 1
 }
 
-# Function to remove Tempo events from the MIDI file
+# Remove tempo events from MIDI file to prevent weird timing errors
+# Optionally, adjust tempo by adjusting timestamps
 # Args: $1 = input MIDI file path
 # Args: $2 = output MIDI file path
 # Args: $3 = optional tempo adjust
@@ -69,11 +66,13 @@ shift
 SYNTH_TYPE=${DEFAULT_TYPE}
 GOFASTER=""
 CSD_FILE="chiptune_synth.csd"
+VOLUME_SCALE="10"
 
-while getopts ":m:s:a" opt; do
+while getopts ":m:s:v:a" opt; do
   case $opt in
     m) ORIGINAL_MIDI_FILE="$OPTARG" ;;
     s) SYNTH_TYPE="$OPTARG" ;;
+    v) VOLUME_SCALE="$OPTARG" ;;
     a) GOFASTER=1 ;;
     \?) echo "Error: Invalid option -$OPTARG" >&2; show_help ;;
     :) echo "Error: Option -$OPTARG requires an argument." >&2; show_help ;;
@@ -105,7 +104,8 @@ if [ "$VALID" -eq 0 ]; then
     exit 1
 fi
 
-CSOUND_FLAG="--omacro:${SYNTH_TYPE}=1"
+SYNTH_MACRO="--omacro:${SYNTH_TYPE}=1"
+VOLUME_MACRO="--omacro:VOLUME_SCALE=${VOLUME_SCALE}"
 
 # Create a temporary output file path for the fixed MIDI
 FIXED_MIDI="${INPUT_MIDI%.mid}_fixed_temp.mid"
@@ -122,14 +122,14 @@ echo "--- Synthesizing with $SYNTH_TYPE ---"
 case "$ACTION" in
     play)
         echo "--- Running Csound (Real-time) ---"
-        csound -odac -F "$FIXED_MIDI" $CSOUND_FLAG "$CSD_FILE"
+        csound -odac -F "$FIXED_MIDI" $SYNTH_MACRO $VOLUME_MACRO "$CSD_FILE"
         ;;
     
     build)
         WAV_FILE="${CSD_FILE%.csd}.wav"
         MP3_FILE="${ORIGINAL_MIDI_FILE%.mid}.mp3"
         echo "--- Running Csound (Build) to ${WAV_FILE} ---"
-        csound -F "$FIXED_MIDI" $CSOUND_FLAG -W -o "$WAV_FILE" "$CSD_FILE"
+        csound -F "$FIXED_MIDI" $SYNTH_MACRO $VOLUME_MACRO -W -o "$WAV_FILE" "$CSD_FILE"
         if [[ $? -eq 0 ]]; then
             ffmpeg -i ${WAV_FILE} -codec:a libmp3lame -q:a 2 ${MP3_FILE}
         fi

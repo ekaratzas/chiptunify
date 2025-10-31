@@ -61,7 +61,7 @@ instr 1
     endif
     
     ; --- 2. Synthesis and Envelope ---
-    iScale = 10
+    iScale = $VOLUME_SCALE
     #ifdef BUZZ
     ; amplitude, freq, ratio, function table
         aSig buzz iFreq, iFreq, 0.25, gisine
